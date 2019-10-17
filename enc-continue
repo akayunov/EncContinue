@@ -1,0 +1,28 @@
+import os
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+backend = default_backend()
+
+raw_text = os.urandom(32)
+
+key = os.urandom(32)
+iv = os.urandom(16)
+
+cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=backend)
+enc = cipher.encryptor()
+encrypted = enc.update(raw_text) + enc.finalize()
+
+print(f'iv1: {iv}')
+print(f'iv2: {encrypted[:16]}')
+
+cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=backend)
+enc = cipher.decryptor()
+dec_part_1 = enc.update(encrypted[:16]) + enc.finalize()
+assert dec_part_1 == raw_text[:16]
+
+cipher = Cipher(algorithms.AES(key), modes.CBC(encrypted[:16]), backend=backend)
+enc = cipher.decryptor()
+dec_part_2 = enc.update(encrypted[16:32]) + enc.finalize()
+
+assert dec_part_2 == raw_text[16:]
